@@ -48,17 +48,19 @@ Revise `tools/secure_env.py`:
 - testar senha errada e arquivo adulterado;
 - não imprimir segredos ou conteúdo descriptografado.
 
-### 4. Tambor de APIs Coarena
+### 4. Controles de uso da Coarena e “tambor” de APIs
 
-Implemente somente se a documentação oficial do provedor confirmar que múltiplas chaves e failover são permitidos. Não trate rotação como forma de contornar limites, quotas ou controles do serviço.
+Implemente monitoramento de uso por conta, sem rotação de contas para contornar limites. Ter múltiplas chaves ou contas não prova que seus saldos ou quotas possam ser combinados.
 
-- Criar schema de metadados para `data/tambor.json`, sem chaves em texto claro.
-- Armazenar segredos em formato criptografado, integrando com o helper seguro; não salvar chave em JSON de estado, logs, argumentos ou configuração do OpenCode.
-- Usar um adaptador configurável para o endpoint e formato reais documentados. Não inventar endpoint, nome de modelo nem semântica de códigos de erro.
-- Alternar apenas quando o provedor indicar inequivocamente uma condição recuperável de chave/crédito e a política do provedor permitir. Respeitar `Retry-After` e limites de taxa; não fazer repetição infinita.
-- Tratar erros de rede/servidor com limite e espera, sem marcar automaticamente uma chave como sem crédito.
-- Criar testes unitários com respostas simuladas, sem credenciais nem chamadas externas.
-- Se detalhes oficiais não forem verificáveis, implementar somente schema e testes com mock, e deixar o adaptador real desativado com pendência explícita.
+- Antes de qualquer integração, verifique a documentação oficial e os termos da Coarena sobre contas múltiplas, limites diários, chaves e uso combinado. Se não for possível confirmar, deixe integração e failover desativados e registre a pendência.
+- Criar `data/tambor.json` apenas para metadados e preferências: identificador não secreto, alias, estado, limites autorizados, uso registrado e horário de renovação. Nunca inclua API keys, tokens ou senhas nesse arquivo.
+- Guardar credenciais somente em mecanismo criptografado e protegido; não as registrar em logs, argumentos, arquivos rastreados ou configuração em texto claro.
+- Implementar um orçamento agregado configurável e limites por conta. Quando uma conta alcançar o limite diário, bloquear novas chamadas para essa conta e aguardar a renovação ou intervenção autorizada.
+- **Não alternar automaticamente para outra conta quando a conta atual atingir seu limite diário, quota, saldo ou restrição.** Não usar múltiplas contas para contornar limite, cobrança, rate limit, controles antifraude ou termos do provedor.
+- Só habilitar failover entre chaves/contas se houver confirmação explícita e documentada do provedor de que o caso de uso é permitido. Mesmo assim, exigir opt-in, teto agregado de gasto, auditoria sem segredos, limites por conta e mecanismo de parada; não elevar nem multiplicar limites autorizados.
+- Respeitar respostas de rate limit e `Retry-After` conforme documentação. Erros de rede ou servidor não devem ser interpretados automaticamente como crédito esgotado.
+- Não inventar endpoint, nome de modelo, semântica de erro ou saldo. Se os detalhes não forem verificáveis, implementar somente controles locais com mocks e manter chamadas reais desativadas.
+- Criar testes unitários sem chaves reais e sem chamadas externas: limite por conta, teto agregado, bloqueio após atingir limite, renovação simulada, erros transitórios e ausência de rotação automática.
 
 ### 5. Launchers e configuração
 
@@ -72,14 +74,15 @@ Revise `start.sh`, `START.bat` e `opencode.jsonc`:
 
 ### 6. Documentação
 
-Atualize `README.md`, `docs/IMPLEMENTATION_STATUS.md` e `docs/SECURITY.md` para refletir o código efetivo, os limites de portabilidade, o status real de cada integração e os testes executados. Não apresente placeholders como integrações funcionais.
+Atualize `README.md`, `docs/IMPLEMENTATION_STATUS.md` e `docs/SECURITY.md` para refletir o código efetivo, os limites de portabilidade, o status real de cada integração e os testes executados. Documente claramente o comportamento de limites e a política de não alternar contas para contorná-los.
 
 ## Critérios de aceite
 
 - O ciclo de vida do servidor dummy passa nos testes locais e o status corresponde ao processo real.
 - Nenhuma integração de ferramenta ofensiva pode ser ativada pelo manager, roteador ou prompt.
 - Nenhum segredo fica em claro em arquivos rastreados, logs ou argumentos de processo.
-- O failover de API só é habilitado após validação da política e do protocolo oficiais; caso contrário, permanece desativado e documentado.
+- Limites por conta e teto agregado são respeitados; atingir um limite bloqueia novas chamadas, sem troca automática para outra conta.
+- Failover de API só pode ser habilitado após validação da política e do protocolo oficiais; caso contrário, permanece desativado e documentado.
 - Documentação e código coincidem, e testes não executados aparecem como pendentes.
 
 ## Entrega final
