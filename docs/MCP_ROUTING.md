@@ -1,24 +1,23 @@
 # MEGA-CODE-4 — Roteamento MCP
 
-## Estratégia pretendida
+## Estado atual
 
-A configuração do projeto descreve uma estratégia de carregamento seletivo para reduzir ferramentas carregadas em tarefas que não precisam de MCP. A implementação atual de `tools/mcp_router.py` classifica texto e imprime uma lista JSON de servidores sugeridos; ela **não inicia, desativa nem conecta servidores MCP** por conta própria.
+`tools/mcp_router.py` é somente um classificador heurístico: recebe texto como argumentos e imprime uma sugestão JSON. Não está conectado ao OpenCode, não inicia nem encerra servidores, não implementa lazy loading e não autoriza operações.
 
-## Classificadores de exemplo
+As configurações MCP em `opencode.jsonc` são referências não verificadas. Os nomes de pacotes, opções de linha de comando e transportes não foram confirmados com projetos upstream; não os execute sem validação independente.
 
-- `hexstrike`: termos relacionados a reconhecimento e descoberta de rede.
-- `cyberstrike-github-security`: análise de repositórios, segredos e SAST.
-- `cyberstrike-cve`: consultas sobre CVEs e avisos de segurança.
-- `cyberstrike-osint`: consultas de inteligência de domínio e ameaças.
+## CyberStrike e HexStrike AI
 
-Essas correspondências são heurísticas simples, podem produzir falsos positivos e não substituem autorização, revisão humana ou validação de escopo.
+Nenhum dos dois está instalado ou integrado neste repositório.
 
-## Requisitos antes de ativar servidores
+- Uma futura integração CyberStrike deve começar por tarefas defensivas de código/dependências e usar um servidor MCP de origem e documentação verificadas.
+- HexStrike não deve ser iniciado automaticamente por correspondência de prompt. A configuração existente é placeholder/desativada; qualquer uso futuro requer autorização explícita, escopo definido e isolamento validado.
 
-1. Instale o servidor MCP a partir de uma fonte oficial e confiável.
-2. Confira nome de pacote, comando, argumentos e variáveis de ambiente na documentação upstream.
-3. Verifique que o serviço escuta somente em `127.0.0.1`.
-4. Mantenha ferramentas de rede desativadas até ter autorização e escopo explícitos.
-5. Teste o comportamento em ambiente descartável e isolado.
+## Requisitos para uma implementação real
 
-Não presuma que a configuração de exemplo implementa lazy loading automaticamente ou que os serviços MCP estão instalados e disponíveis.
+1. Escolher servidores MCP upstream verificados e registrar versão fixa, não uma instalação flutuante via `npx -y`.
+2. Confirmar transporte e esquema suportados pelo engine OpenCode utilizado.
+3. Implementar ativação no cliente/engine; a saída atual do classificador não executa essa ação.
+4. Manter servidores desativados por padrão e aplicar allowlist de escopo para ferramentas de segurança.
+5. Exibir no dashboard estado obtido por health check real, não um rótulo estático.
+6. Testar com servidores de demonstração em ambiente isolado antes de disponibilizar a usuários.

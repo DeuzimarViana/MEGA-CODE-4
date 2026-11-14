@@ -1,40 +1,23 @@
 # MEGA-CODE-4 — Notas de segurança
 
-## Escopo e limites
+Consulte também [o status da implementação](IMPLEMENTATION_STATUS.md). O projeto está em protótipo e não deve ser considerado uma distribuição endurecida ou pronta para produção.
 
-O projeto procura manter dados de runtime em `data/` e limitar os serviços locais a localhost. Isso reduz a escrita em diretórios comuns do usuário, mas **não garante operação sem rastros no host**: swap, logs do sistema, antivírus, backups, telemetria e sincronização podem observar ou copiar dados.
+## Limites de portabilidade
 
-## Política local
+Os launchers tentam redirecionar diretórios conhecidos para `data/`, mas isso não garante “zero rastros”: sistema operacional, swap, logs, antivírus, backups, telemetria e sincronização podem observar ou persistir dados.
 
-- O servidor de dashboard de exemplo vincula-se a `127.0.0.1`.
-- Configure servidores MCP locais para escutar somente em `127.0.0.1`; não use `0.0.0.0`.
-- Mantenha integrações não necessárias desativadas.
-- Use ferramentas de segurança apenas em sistemas e repositórios com autorização explícita.
+## Credenciais
 
-## Autenticação do dashboard
+O helper Python cifra conteúdo com AES-GCM e deriva chave com PBKDF2-HMAC-SHA256. Apesar disso, o fluxo atual de launcher ainda passa senha como argumento de processo e cria arquivo temporário de texto claro; isso pode expor segredos. Não use credenciais reais com o fluxo atual até essa implementação ser corrigida e testada. Criptografia em repouso não protege dados em memória.
 
-O servidor gera um Bearer Token aleatório na inicialização, salvo se `MEGA_DASHBOARD_TOKEN` estiver definido. Trate-o como uma credencial. A implementação atual tem uma rota local `/api/token`; portanto, não exponha o serviço a redes externas nem o coloque atrás de um proxy público.
+## Dashboard
 
-## Segredos
+O servidor de demonstração tem limitações que precisam de correção antes de uso sensível: token configurável por ambiente, rota de token local, autenticação do navegador não concluída e badges que não representam health checks reais. Não exponha a porta em interfaces de rede.
 
-- O utilitário `tools/secure_env.py` cifra dados com AES-GCM e deriva a chave com PBKDF2-HMAC-SHA256.
-- O utilitário requer o pacote Python `cryptography`.
-- A senha mestre não deve ser codificada, registrada em logs ou transmitida em argumentos de linha de comando em ambientes compartilhados.
-- Revise permissões e remova arquivos temporários de forma segura conforme as necessidades do seu sistema.
-- A cifragem em repouso não protege segredos depois que são descriptografados e carregados em memória.
+## MCP e ferramentas de segurança
 
-## MCP e sandbox
+Os conectores CyberStrike e HexStrike não estão instalados nem integrados neste repositório. Configuração declarativa não significa execução nem segurança. Mantenha serviços não validados desligados. Só use ferramentas em sistemas com autorização e escopo definidos; não faça ativação automática baseada apenas em prompt.
 
-A configuração MCP e o Dockerfile são exemplos iniciais e devem ser validados antes do uso. A existência de uma configuração não significa que um servidor foi instalado, iniciado, autenticado ou isolado. Para ferramentas de maior risco, use uma VM ou container dedicado, sem mounts de arquivos do host, com usuário não-root, capabilities removidas, limites de recursos e política de rede restritiva.
+## Container
 
-## XSS e conteúdo não confiável
-
-- Trate HTML e Markdown de fontes externas como conteúdo não confiável.
-- Prefira `textContent` para inserir conteúdo dinâmico no DOM; evite `innerHTML` com dados externos.
-- Revise a política CSP e os recursos carregados antes de usar o dashboard com conteúdo sensível.
-
-## Princípios de operação
-
-- Em caso de dúvida, mantenha integrações desativadas.
-- Não execute ações de varredura ou teste sem autorização e escopo definidos.
-- Não considere “portátil” sinônimo de “sem rastros” ou “sandbox seguro por padrão”.
+O `Dockerfile` presente inicia um servidor HTTP estático e não constitui sandbox das ferramentas. Não o use para alegar isolamento de código ou de ferramentas MCP. Para desenvolvimento, prefira uma VM descartável ou um container revisado sem mounts do host, com usuário não-root, capabilities removidas, limites de recursos e rede restrita.
