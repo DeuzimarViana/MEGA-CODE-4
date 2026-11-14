@@ -1,3 +1,16 @@
+<p align="center">
+  <pre align="center">
+<span style="color:#ff1a1a">███╗   ███╗███████╗ ██████╗  █████╗       ██████╗ ██████╗ ██████╗ ███████╗██╗  ██╗██╗  ██╗</span>
+<span style="color:#ff3333">████╗ ████║██╔════╝██╔════╝ ██╔══██╗     ██╔════╝██╔═══██╗██╔══██╗██╔════╝██║  ██║██║  ██║</span>
+<span style="color:#ff4d4d">██╔████╔██║█████╗  ██║  ███╗███████║     ██║     ██║   ██║██║  ██║█████╗  ███████║███████║</span>
+<span style="color:#ff6666">██║╚██╔╝██║██╔══╝  ██║   ██║██╔══██║     ██║     ██║   ██║██║  ██║██╔══╝  ██╔══██║╚════██║</span>
+<span style="color:#ff8080">██║ ╚═╝ ██║███████╗╚██████╔╝██║  ██║     ╚██████╗╚██████╔╝██████╔╝███████╗██║  ██║     ██║</span>
+<span style="color:#ff9999">╚═╝     ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝      ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝     ╚═╝</span>
+  </pre>
+  <strong style="color:#ff3333">⚡ MEGA-CODE-4 ⚡</strong><br>
+  <em>Portable AI Coding Project</em>
+</p>
+
 # MEGA-CODE-4
 
 > Projeto experimental para um agente portátil de codificação com integração de IA e documentação de segurança.
@@ -19,11 +32,11 @@ Os valores `api.coarena.example` e `Fable-5` são placeholders e não garantem q
 
 ## Aviso sobre launchers
 
-`start.sh` e `START.bat` estão em estado experimental. A cópia atual não foi testada e o launcher de Windows não contém todas as rotinas referenciadas. Não os use com credenciais reais até que os problemas listados em [IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) sejam corrigidos.
+`start.sh` e `START.bat` estão em estado experimental. A cópia atual não foi testada e o launcher de Windows não contém todas as rotinas referenciadas. Não os use com credenciais reais até a correção e validação.
 
 ## CyberStrike e HexStrike AI
 
-Essas ferramentas **não estão implementadas nem conectadas** neste repositório. As referências em `opencode.jsonc` são exemplos não verificados, permanecem desativadas e não devem ser tratadas como comandos instaláveis. O roteador apenas classifica texto e imprime sugestões; ele não inicia servidores nem integra ferramentas ao agente.
+Essas ferramentas **não estão implementadas nem conectadas** neste repositório. As referências em `opencode.jsonc` são exemplos não verificados, permanecem desativadas e não devem ser tratadas como comandos instaláveis. O roteador apenas classifica texto e sugere nomes; ele não inicia servidores nem integra ferramentas ao agente.
 
 Qualquer integração futura deve usar fontes oficiais verificadas, ser opt-in e limitar-se a uso autorizado. O roteador não substitui controles de escopo ou autorização.
 
@@ -38,3 +51,4 @@ O Dockerfile atual serve apenas como exemplo de servidor HTTP estático: não é
 - [Status real da implementação](docs/IMPLEMENTATION_STATUS.md)
 - [Notas de segurança](docs/SECURITY.md)
 - [Roteamento MCP](docs/MCP_ROUTING.md)
+- [Prompt para Claude Code](docs/CLAUDE_CODE_PROMPT.md)
