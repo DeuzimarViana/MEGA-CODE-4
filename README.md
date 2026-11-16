@@ -23,7 +23,7 @@ O repositório contém launchers experimentais, configuração de exemplo, um cl
 
 ## Requisitos para desenvolvimento
 
-- Python 3 e o pacote `cryptography` para testar `tools/secure_env.py`.
+- Python 3 e o pacote `cryptography` para `tools/secure_env.py` e `tools/launch.py` (o `START.bat` exige Python 3 no Windows).
 - Node.js para executar o servidor de dashboard de exemplo.
 - Um engine OpenCode compatível, instalado ou construído por você; a árvore deste repositório não contém os binários.
 - Endpoint, modelo e credencial válidos fornecidos pela Coarena, se for testar o provedor.
@@ -32,7 +32,7 @@ Os valores `api.coarena.example` e `Fable-5` são placeholders e não garantem q
 
 ## Aviso sobre launchers
 
-`start.sh` e `START.bat` estão em estado experimental. A cópia atual não foi testada e o launcher de Windows não contém todas as rotinas referenciadas. Não os use com credenciais reais até a correção e validação.
+`start.sh`, `START.bat` (que chama `tools/launch.py`) e `tools/launch.py` estão em estado experimental. Foram testados apenas em Linux com um engine falso: o engine OpenCode real não está no repositório e o `START.bat` não foi executado em Windows. Não os use com credenciais reais até a validação (veja [status da implementação](docs/IMPLEMENTATION_STATUS.md)).
 
 ## CyberStrike e HexStrike AI
 
