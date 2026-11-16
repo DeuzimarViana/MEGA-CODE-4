@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -u
+umask 077
 
 # ==============================================================================
 # MEGA-CODE-4 - Portable launcher
@@ -18,6 +19,8 @@ LOG_DIR="$DATA_DIR/logs"
 OC_DATA_DIR="$DATA_DIR/opencode"
 ENV_FILE="$DATA_DIR/ai_settings.env"
 SECURE_ENV="$ROOT_DIR/tools/secure_env.py"
+TMP_FILE=""
+trap 'rm -f "${TMP_FILE:-}"' EXIT
 
 mkdir -p "$HOME_DIR" "$CONFIG_HOME" "$APP_DATA" "$LOCAL_APP_DATA" "$CACHE_DIR" "$LOG_DIR" "$OC_DATA_DIR" "$ROOT_DIR/tools"
 
@@ -63,46 +66,49 @@ load_encrypted_settings() {
   ensure_crypto_tool
   prompt_master_password
 
-  local tmp
-  tmp="$(mktemp)"
-  python3 "$SECURE_ENV" --decrypt --input "$ENV_FILE" --output "$tmp" --password "$MASTER_PASSWORD" || {
+  # Temporario dentro de data/, com umask 077; removido logo apos o uso (e no trap EXIT).
+  # A senha vai por variavel de ambiente so deste processo, nunca por argumento (visivel no ps).
+  TMP_FILE="$(mktemp "$DATA_DIR/.settings.XXXXXX")"
+  MEGA_SECURE_ENV_PASSWORD="$MASTER_PASSWORD" python3 "$SECURE_ENV" --decrypt --input "$ENV_FILE" --output "$TMP_FILE" || {
     echo -e "${RED}[ERROR] Falha ao descriptografar $ENV_FILE${RESET}"
     exit 1
   }
 
-  if [ -s "$tmp" ]; then
+  if [ -s "$TMP_FILE" ]; then
     set -a
-    . "$tmp"
+    . "$TMP_FILE"
     set +a
   fi
 
-  rm -f "$tmp"
+  rm -f "$TMP_FILE"
+  TMP_FILE=""
 }
 
 save_encrypted_settings() {
   ensure_crypto_tool
   prompt_master_password
 
-  local tmp
-  tmp="$(mktemp)"
+  TMP_FILE="$(mktemp "$DATA_DIR/.settings.XXXXXX")"
   {
     echo "# MEGA-CODE-4 settings"
-    echo "COARENA_API_KEY=${COARENA_API_KEY:-}"
-    echo "COARENA_BASE_URL=${COARENA_BASE_URL:-https://api.coarena.example/v1}"
-    echo "COARENA_MODEL=${COARENA_MODEL:-Fable-5}"
-    echo "AI_PROVIDER=${AI_PROVIDER:-coarena}"
-    echo "OPENCODE_MODEL=${OPENCODE_MODEL:-coarena/Fable-5}"
-    echo "MCP_HEXSTRIKE=${MCP_HEXSTRIKE:-0}"
-    echo "MCP_CYBERSTRIKE=${MCP_CYBERSTRIKE:-0}"
-  } > "$tmp"
+    printf 'COARENA_API_KEY=%q\n' "${COARENA_API_KEY:-}"
+    printf 'COARENA_BASE_URL=%q\n' "${COARENA_BASE_URL:-https://api.coarena.example/v1}"
+    printf 'COARENA_MODEL=%q\n' "${COARENA_MODEL:-Fable-5}"
+    printf 'AI_PROVIDER=%q\n' "${AI_PROVIDER:-coarena}"
+    printf 'OPENCODE_MODEL=%q\n' "${OPENCODE_MODEL:-coarena/Fable-5}"
+    printf 'MCP_HEXSTRIKE=%q\n' "${MCP_HEXSTRIKE:-0}"
+    printf 'MCP_CYBERSTRIKE=%q\n' "${MCP_CYBERSTRIKE:-0}"
+  } > "$TMP_FILE"
 
-  python3 "$SECURE_ENV" --encrypt --input "$tmp" --output "$ENV_FILE" --password "$MASTER_PASSWORD" || {
+  MEGA_SECURE_ENV_PASSWORD="$MASTER_PASSWORD" python3 "$SECURE_ENV" --encrypt --input "$TMP_FILE" --output "$ENV_FILE" || {
     echo -e "${RED}[ERROR] Falha ao cifrar credenciais.${RESET}"
-    rm -f "$tmp"
+    rm -f "$TMP_FILE"
+    TMP_FILE=""
     exit 1
   }
   chmod 600 "$ENV_FILE" 2>/dev/null || true
-  rm -f "$tmp"
+  rm -f "$TMP_FILE"
+  TMP_FILE=""
 }
 
 ensure_coarena_defaults() {
@@ -181,10 +187,11 @@ ensure_coarena_defaults
 if [ ! -f "$ENV_FILE" ]; then
   echo -e "${YELLOW}[~] Nenhuma configuração cifrada encontrada. Configure a Coarena para continuar.${RESET}"
   prompt_master_password
-  read -p "  URL da Coarena (ex.: https://api.coarena.example/v1): " COARENA_BASE_URL
+  read -r -p "  URL da Coarena (ex.: https://api.coarena.example/v1): " COARENA_BASE_URL
   COARENA_BASE_URL="${COARENA_BASE_URL:-https://api.coarena.example/v1}"
-  read -p "  Chave da API da Coarena: " COARENA_API_KEY
-  read -p "  Modelo da Coarena (ex.: Fable-5): " COARENA_MODEL
+  read -s -r -p "  Chave da API da Coarena (nao aparece ao digitar): " COARENA_API_KEY
+  echo
+  read -r -p "  Modelo da Coarena (ex.: Fable-5): " COARENA_MODEL
   COARENA_MODEL="${COARENA_MODEL:-Fable-5}"
   AI_PROVIDER="coarena"
   OPENCODE_MODEL="coarena/${COARENA_MODEL}"
@@ -221,40 +228,40 @@ OC_BIN="$ROOT_DIR/engine/opencode-${PLATFORM}-${NODE_ARCH}/opencode"
 }
 
 # ---------- render opencode config ----------
-cat > "$HOME_DIR/.opencode.json" <<EOF
-{
-  "data": {
-    "directory": "$OC_DATA_DIR"
-  },
-  "providers": {
-    "coarena": {
-      "apiKey": "${COARENA_API_KEY:-}",
-      "baseURL": "${COARENA_BASE_URL:-https://api.coarena.example/v1}",
-      "models": ["${COARENA_MODEL:-Fable-5}"]
-    }
-  },
-  "agents": {
-    "mega": {
-      "model": "coarena/${COARENA_MODEL:-Fable-5}"
-    }
-  },
-  "mcp": {
-    "lazyLoad": true,
-    "servers": {
-      "hexstrike": {
-        "enabled": ${MCP_HEXSTRIKE:-0},
-        "host": "127.0.0.1",
-        "port": 8889
-      },
-      "cyberstrike": {
-        "enabled": ${MCP_CYBERSTRIKE:-0},
-        "host": "127.0.0.1",
-        "port": 8890
-      }
-    }
-  }
+# O schema do OpenCode ainda NAO foi validado (ver docs/IMPLEMENTATION_STATUS.md).
+# A chave de API e escrita em texto claro neste arquivo (permissao 0600): limitacao conhecida.
+# HexStrike fica sempre desativado; os valores vem do ambiente, nunca de texto interpolado.
+python3 - "$HOME_DIR/.opencode.json" "$OC_DATA_DIR" <<'PYCFG'
+import json, os, sys
+
+out, data_dir = sys.argv[1], sys.argv[2]
+model = os.environ.get("COARENA_MODEL", "Fable-5")
+cfg = {
+    "data": {"directory": data_dir},
+    "providers": {
+        "coarena": {
+            "apiKey": os.environ.get("COARENA_API_KEY", ""),
+            "baseURL": os.environ.get("COARENA_BASE_URL", "https://api.coarena.example/v1"),
+            "models": [model],
+        }
+    },
+    "agents": {"mega": {"model": "coarena/" + model}},
+    "mcp": {
+        "lazyLoad": True,
+        "servers": {
+            "hexstrike": {"enabled": False, "host": "127.0.0.1", "port": 8889},
+            "cyberstrike": {
+                "enabled": os.environ.get("MCP_CYBERSTRIKE", "0") == "1",
+                "host": "127.0.0.1",
+                "port": 8890,
+            },
+        },
+    },
 }
-EOF
+fd = os.open(out, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+with os.fdopen(fd, "w", encoding="utf-8") as handle:
+    json.dump(cfg, handle, indent=2)
+PYCFG
 chmod 600 "$HOME_DIR/.opencode.json" 2>/dev/null || true
 
 ascii_banner
@@ -266,8 +273,7 @@ echo -e "  ${BOLD}Engine${RESET}  : ${GREEN}$(basename "$OC_BIN")${RESET}"
 echo -e "  ${BOLD}Model${RESET}   : ${GREEN}${COARENA_MODEL:-Fable-5}${RESET}"
 echo -e "  ${BOLD}Project${RESET} : ${GREEN}${PROJECT_DIR}${RESET}"
 echo -e "  ${BOLD}Data${RESET}    : ${DIM}${DATA_DIR}${RESET}"
-echo -e "  ${BOLD}MCP${RESET}     : ${GREEN}[HexStrike ${MCP_HEXSTRIKE:-0}] [CyberStrike ${MCP_CYBERSTRIKE:-0}]${RESET}"
-echo -e "  ${BOLD}Token${RESET}   : ${DIM}${MEGA_DASHBOARD_TOKEN:-generated-at-runtime}${RESET}"
+echo -e "  ${BOLD}MCP${RESET}     : ${DIM}HexStrike desativado | CyberStrike ${MCP_CYBERSTRIKE:-0} (configurado, nao verificado)${RESET}"
 echo -e "${BLUE}=========================================================${RESET}"
 
 if [ "$SETUP_ONLY" -eq 1 ]; then
@@ -278,7 +284,7 @@ fi
 echo ""
 echo -e "  ${CYAN}[~] Iniciando OpenCode...${RESET}"
 cd "$PROJECT_DIR" || exit 1
-"$OC_BIN" "${PASS_ARGS[@]}"
+"$OC_BIN" "${PASS_ARGS[@]+"${PASS_ARGS[@]}"}"
 STATUS=$?
 
 echo ""

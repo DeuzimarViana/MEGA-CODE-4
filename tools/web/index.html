@@ -17,16 +17,18 @@
       </div>
 
       <div class="status-strip" aria-live="polite">
-        <span class="badge online"><span class="dot"></span> MCP: HexStrike ON</span>
-        <span class="badge online"><span class="dot"></span> CyberStrike ON</span>
-        <span class="badge neutral"><span class="dot"></span> Model: Fable 5</span>
+        <span class="badge neutral"><span class="dot"></span> Status: carregando</span>
       </div>
     </header>
 
     <main class="content">
       <section class="panel">
         <h1>Dashboard de Operação Segura</h1>
-        <p>Portal local do agente MEGA-CODE-4. Todo o acesso ao dashboard exige Bearer Token e escuta local em 127.0.0.1.</p>
+        <p>Portal local do agente MEGA-CODE-4. A API exige Bearer Token e o servidor escuta apenas em 127.0.0.1. O estado dos serviços MCP aparece como "unknown" enquanto não houver verificação real.</p>
+        <form id="token-form" autocomplete="off" style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1rem;">
+          <input id="token-input" type="password" placeholder="Cole o token exibido no terminal" aria-label="Token do dashboard" style="flex:1;min-width:220px;padding:0.6rem 0.8rem;border-radius:10px;border:1px solid rgba(105,240,255,0.3);background:rgba(255,255,255,0.04);color:inherit;" />
+          <button type="submit" style="padding:0.6rem 1.1rem;border-radius:10px;border:1px solid rgba(105,240,255,0.45);background:rgba(105,240,255,0.12);color:inherit;cursor:pointer;">Conectar</button>
+        </form>
       </section>
     </main>
 
