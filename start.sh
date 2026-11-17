@@ -16,19 +16,24 @@ APP_DATA="$DATA_DIR/app_data"
 LOCAL_APP_DATA="$DATA_DIR/local_app_data"
 CACHE_DIR="$DATA_DIR/cache"
 LOG_DIR="$DATA_DIR/logs"
-OC_DATA_DIR="$DATA_DIR/opencode"
+OC_DATA_DIR="$APP_DATA/opencode"
+STATE_DIR="$DATA_DIR/state"
+TMP_DIR="$DATA_DIR/tmp"
 ENV_FILE="$DATA_DIR/ai_settings.env"
 SECURE_ENV="$ROOT_DIR/tools/secure_env.py"
 TMP_FILE=""
 trap 'rm -f "${TMP_FILE:-}"' EXIT
 
-mkdir -p "$HOME_DIR" "$CONFIG_HOME" "$APP_DATA" "$LOCAL_APP_DATA" "$CACHE_DIR" "$LOG_DIR" "$OC_DATA_DIR" "$ROOT_DIR/tools"
+mkdir -p "$HOME_DIR" "$CONFIG_HOME" "$APP_DATA" "$LOCAL_APP_DATA" "$CACHE_DIR" "$LOG_DIR" "$OC_DATA_DIR" "$STATE_DIR" "$TMP_DIR" "$ROOT_DIR/tools"
 
 export HOME="$HOME_DIR"
 export USERPROFILE="$HOME_DIR"
 export XDG_CONFIG_HOME="$CONFIG_HOME"
 export XDG_DATA_HOME="$APP_DATA"
 export XDG_CACHE_HOME="$CACHE_DIR"
+export XDG_STATE_HOME="$STATE_DIR"
+# A pasta temporaria do OpenCode vai para data/tmp (por padrao seria /tmp/opencode, fora de data/).
+export TMPDIR="$TMP_DIR"
 export APPDATA="$APP_DATA"
 export LOCALAPPDATA="$LOCAL_APP_DATA"
 export PATH="$ROOT_DIR/tools:$PATH"
@@ -222,47 +227,35 @@ case "$ARCH" in
 esac
 
 OC_BIN="$ROOT_DIR/engine/opencode-${PLATFORM}-${NODE_ARCH}/opencode"
-[ -x "$OC_BIN" ] || {
-  echo -e "${RED}[ERROR] OpenCode engine não encontrado em $OC_BIN${RESET}"
+if [ ! -x "$OC_BIN" ]; then
+  # Último recurso: o `opencode` instalado no PATH (instalação oficial feita pelo usuário).
+  PATH_BIN="$(command -v opencode 2>/dev/null || true)"
+  if [ -n "$PATH_BIN" ]; then
+    echo -e "${YELLOW}[AVISO] Engine não encontrado em engine/; usando o opencode do PATH: $PATH_BIN${RESET}" >&2
+    OC_BIN="$PATH_BIN"
+  else
+    echo -e "${RED}[ERROR] OpenCode engine não encontrado em $OC_BIN e não há 'opencode' no PATH.${RESET}"
+    echo -e "${RED}        Instale o OpenCode por fonte oficial (opencode.ai) ou copie o binário para engine/.${RESET}"
+    exit 1
+  fi
+fi
+
+# ---------- render opencode config ----------
+# Gera data/config/opencode/opencode.json (formato oficial, validado com o OpenCode 1.19.5)
+# a partir do opencode.jsonc. A chave de API NAO vai para o arquivo: o engine a recebe pela
+# variável de ambiente COARENA_API_KEY ({env:COARENA_API_KEY} na configuração). Nenhum MCP é habilitado.
+mkdir -p "$CONFIG_HOME/opencode"
+python3 "$ROOT_DIR/tools/gen_opencode_config.py" \
+  --template "$ROOT_DIR/opencode.jsonc" \
+  --out "$CONFIG_HOME/opencode/opencode.json" \
+  --base-url "$COARENA_BASE_URL" \
+  --model "$COARENA_MODEL" || {
+  echo -e "${RED}[ERROR] Falha ao gerar a configuração do OpenCode.${RESET}"
   exit 1
 }
 
-# ---------- render opencode config ----------
-# O schema do OpenCode ainda NAO foi validado (ver docs/IMPLEMENTATION_STATUS.md).
-# A chave de API e escrita em texto claro neste arquivo (permissao 0600): limitacao conhecida.
-# HexStrike fica sempre desativado; os valores vem do ambiente, nunca de texto interpolado.
-python3 - "$HOME_DIR/.opencode.json" "$OC_DATA_DIR" <<'PYCFG'
-import json, os, sys
-
-out, data_dir = sys.argv[1], sys.argv[2]
-model = os.environ.get("COARENA_MODEL", "Fable-5")
-cfg = {
-    "data": {"directory": data_dir},
-    "providers": {
-        "coarena": {
-            "apiKey": os.environ.get("COARENA_API_KEY", ""),
-            "baseURL": os.environ.get("COARENA_BASE_URL", "https://api.coarena.example/v1"),
-            "models": [model],
-        }
-    },
-    "agents": {"mega": {"model": "coarena/" + model}},
-    "mcp": {
-        "lazyLoad": True,
-        "servers": {
-            "hexstrike": {"enabled": False, "host": "127.0.0.1", "port": 8889},
-            "cyberstrike": {
-                "enabled": os.environ.get("MCP_CYBERSTRIKE", "0") == "1",
-                "host": "127.0.0.1",
-                "port": 8890,
-            },
-        },
-    },
-}
-fd = os.open(out, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-with os.fdopen(fd, "w", encoding="utf-8") as handle:
-    json.dump(cfg, handle, indent=2)
-PYCFG
-chmod 600 "$HOME_DIR/.opencode.json" 2>/dev/null || true
+# A senha mestra não deve chegar ao engine (nem como variável herdada do ambiente).
+unset MEGA_MASTER_PASSWORD MASTER_PASSWORD MEGA_SECURE_ENV_PASSWORD
 
 ascii_banner
 
@@ -273,7 +266,7 @@ echo -e "  ${BOLD}Engine${RESET}  : ${GREEN}$(basename "$OC_BIN")${RESET}"
 echo -e "  ${BOLD}Model${RESET}   : ${GREEN}${COARENA_MODEL:-Fable-5}${RESET}"
 echo -e "  ${BOLD}Project${RESET} : ${GREEN}${PROJECT_DIR}${RESET}"
 echo -e "  ${BOLD}Data${RESET}    : ${DIM}${DATA_DIR}${RESET}"
-echo -e "  ${BOLD}MCP${RESET}     : ${DIM}HexStrike desativado | CyberStrike ${MCP_CYBERSTRIKE:-0} (configurado, nao verificado)${RESET}"
+echo -e "  ${BOLD}MCP${RESET}     : ${DIM}todos desativados (nenhum é habilitado pelo launcher)${RESET}"
 echo -e "${BLUE}=========================================================${RESET}"
 
 if [ "$SETUP_ONLY" -eq 1 ]; then
