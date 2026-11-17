@@ -25,7 +25,7 @@ O repositório contém launchers experimentais, configuração de exemplo, um cl
 
 - Python 3 e o pacote `cryptography` para `tools/secure_env.py` e `tools/launch.py` (o `START.bat` exige Python 3 no Windows).
 - Node.js para executar o servidor de dashboard de exemplo.
-- Um engine OpenCode compatível, instalado ou construído por você; a árvore deste repositório não contém os binários.
+- Um engine OpenCode compatível, obtido de fonte oficial (opencode.ai); a árvore deste repositório não contém os binários. A configuração foi validada com a versão 1.19.5 (Linux x64). Evite forks não oficiais.
 - Endpoint, modelo e credencial válidos fornecidos pela Coarena, se for testar o provedor.
 
 Os valores `api.coarena.example` e `Fable-5` são placeholders e não garantem que esse endpoint/modelo exista. Confirme os dados com o provedor.
@@ -34,9 +34,11 @@ Os valores `api.coarena.example` e `Fable-5` são placeholders e não garantem q
 
 `start.sh`, `START.bat` (que chama `tools/launch.py`) e `tools/launch.py` estão em estado experimental. Foram testados apenas em Linux com um engine falso: o engine OpenCode real não está no repositório e o `START.bat` não foi executado em Windows. Não os use com credenciais reais até a validação (veja [status da implementação](docs/IMPLEMENTATION_STATUS.md)).
 
+**Importante:** o `.opencode.json` que os launchers geram **não é lido** pelo OpenCode real (testado com a versão 1.19.5). A configuração válida é o `opencode.jsonc` deste repositório, que o engine lê na raiz do projeto aberto ou em `$XDG_CONFIG_HOME/opencode/`. Ajustar os launchers para isso ainda está pendente.
+
 ## CyberStrike e HexStrike AI
 
-Essas ferramentas **não estão implementadas nem conectadas** neste repositório. As referências em `opencode.jsonc` são exemplos não verificados, permanecem desativadas e não devem ser tratadas como comandos instaláveis. O roteador apenas classifica texto e sugere nomes; ele não inicia servidores nem integra ferramentas ao agente.
+Essas ferramentas **não estão implementadas nem conectadas** neste repositório. O `opencode.jsonc` mantém três entradas CyberStrike no formato oficial do OpenCode, todas desativadas (`enabled: false`). Os pacotes não foram verificados e não devem ser tratados como comandos instaláveis. HexStrike não tem entrada na configuração. O roteador apenas classifica texto e sugere nomes; ele não inicia servidores nem integra ferramentas ao agente.
 
 Qualquer integração futura deve usar fontes oficiais verificadas, ser opt-in e limitar-se a uso autorizado. O roteador não substitui controles de escopo ou autorização.
 
