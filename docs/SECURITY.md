@@ -8,9 +8,9 @@ Os launchers tentam redirecionar diretórios conhecidos para `data/`, mas isso n
 
 ## Credenciais
 
-O helper Python cifra conteúdo com AES-GCM e deriva chave com PBKDF2-HMAC-SHA256. A senha não é mais passada como argumento de linha de comando: o `start.sh` a entrega por variável de ambiente apenas ao processo filho (ou o helper pede via `getpass`). Limitações que continuam valendo:
+O helper Python cifra conteúdo com AES-GCM e deriva chave com PBKDF2-HMAC-SHA256. A senha não é mais passada como argumento de linha de comando: o `start.sh` a entrega por variável de ambiente apenas ao processo filho (ou o helper pede via `getpass`), e o `launch.py` a lê com `getpass` (ou de `MEGA_MASTER_PASSWORD`, que não é repassada ao engine). Limitações que continuam valendo:
 
-- durante a carga e a gravação das configurações existe um arquivo temporário em texto claro, criado em `data/` com permissão 0600 e removido logo depois (e no `trap EXIT`); remover o arquivo não garante apagamento físico em SSD ou sistemas com journaling;
+- no `start.sh`, durante a carga e a gravação das configurações existe um arquivo temporário em texto claro, criado em `data/` com permissão 0600 e removido logo depois (e no `trap EXIT`); remover o arquivo não garante apagamento físico em SSD ou sistemas com journaling. O `tools/launch.py` (usado pelo `START.bat`) cifra e decifra em memória, sem esse temporário;
 - a chave de API é gravada em texto claro em `data/home/.opencode.json` (permissão 0600), porque o formato de configuração do engine ainda não foi validado;
 - o formato do arquivo cifrado não é versionado;
 - criptografia em repouso não protege dados em memória.
