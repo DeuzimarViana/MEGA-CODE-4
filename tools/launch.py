@@ -8,22 +8,27 @@ rotinas de batch:
     cifrando e decifrando EM MEMORIA (sem arquivo temporario em texto claro);
   * a senha mestra e a chave de API sao lidas sem eco (getpass) e nunca vao
     para argumentos de linha de comando;
-  * gera data/home/.opencode.json com json.dump (HexStrike sempre desativado);
+  * gera data/config/opencode/opencode.json (formato oficial do OpenCode, validado com a
+    1.19.5) a partir do opencode.jsonc, SEM a chave de API: ela vai para o engine pela
+    variavel de ambiente COARENA_API_KEY ({env:COARENA_API_KEY} na configuracao);
+  * aponta a pasta temporaria do engine (TMPDIR/TEMP/TMP) para ./data/tmp;
+  * usa o engine em engine/opencode-<sistema>-<arq>/ ou, se nao existir, o `opencode` do PATH;
   * executa o engine OpenCode e devolve o codigo de saida dele.
 
-Limitacoes conhecidas: o schema do OpenCode nao foi validado e a chave de API
-fica em texto claro em .opencode.json (permissao 0600 onde o SO suporta).
+Limitacoes conhecidas: so foi testado em Linux; a chave continua visivel ao engine (e a
+quem puder ler o ambiente do processo) enquanto ele roda.
 """
 import getpass
-import json
 import os
 import platform
 import shlex
+import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import gen_opencode_config  # noqa: E402
 import secure_env  # noqa: E402
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -76,10 +81,16 @@ def find_engine(root):
     exe = candidates[0].name
     for found in sorted((Path(root) / "engine").glob(f"opencode-*/{exe}")):
         return found
+    # Ultimo recurso: o `opencode` instalado no PATH (instalacao oficial feita pelo usuario).
+    on_path = shutil.which("opencode")
+    if on_path:
+        print(f"[AVISO] Engine nao encontrado em engine/; usando o opencode do PATH: {on_path}", file=sys.stderr)
+        return Path(on_path)
     fail(
         "OpenCode engine nao encontrado.\n"
         f"        Esperado: {candidates[0]}\n"
-        "        O repositorio nao inclui os binarios; obtenha o engine por fonte oficial."
+        "        Nem ha um `opencode` no PATH. O repositorio nao inclui os binarios;\n"
+        "        instale o OpenCode por fonte oficial (opencode.ai) ou copie o binario para engine/."
     )
 
 
@@ -157,34 +168,6 @@ def prompt_new_settings():
     }
 
 
-def write_opencode_config(path, data_dir, settings):
-    model = settings.get("COARENA_MODEL") or DEFAULT_MODEL
-    cfg = {
-        "data": {"directory": str(data_dir)},
-        "providers": {
-            "coarena": {
-                "apiKey": settings.get("COARENA_API_KEY", ""),
-                "baseURL": settings.get("COARENA_BASE_URL") or DEFAULT_URL,
-                "models": [model],
-            }
-        },
-        "agents": {"mega": {"model": f"coarena/{model}"}},
-        "mcp": {
-            "lazyLoad": True,
-            "servers": {
-                # HexStrike: sempre desativado neste projeto.
-                "hexstrike": {"enabled": False, "host": "127.0.0.1", "port": 8889},
-                "cyberstrike": {
-                    "enabled": settings.get("MCP_CYBERSTRIKE", "0") == "1",
-                    "host": "127.0.0.1",
-                    "port": 8890,
-                },
-            },
-        },
-    }
-    secure_env.write_private(str(path), json.dumps(cfg, indent=2).encode("utf-8"))
-
-
 def parse_args(argv):
     opts = {"dir": None, "setup": False, "passthrough": []}
     i = 0
@@ -225,7 +208,8 @@ def main(argv):
         "local_app_data": data_dir / "local_app_data",
         "cache": data_dir / "cache",
         "logs": data_dir / "logs",
-        "opencode": data_dir / "opencode",
+        "state": data_dir / "state",
+        "tmp": data_dir / "tmp",
     }
     for directory in dirs.values():
         directory.mkdir(parents=True, exist_ok=True)
@@ -247,7 +231,13 @@ def main(argv):
             fail(f"Falha ao descriptografar {env_file}: {exc}")
 
     engine = find_engine(ROOT_DIR)
-    write_opencode_config(dirs["home"] / ".opencode.json", dirs["opencode"], settings)
+    model = settings.get("COARENA_MODEL") or DEFAULT_MODEL
+    try:
+        cfg = gen_opencode_config.build_config(
+            ROOT_DIR / "opencode.jsonc", settings.get("COARENA_BASE_URL") or DEFAULT_URL, model)
+        gen_opencode_config.write_config(dirs["config"] / "opencode" / "opencode.json", cfg)
+    except (OSError, ValueError, KeyError) as exc:
+        fail(f"Nao foi possivel gerar a configuracao do OpenCode: {exc}")
 
     # ---- ambiente portatil do processo filho ----
     env = os.environ.copy()
@@ -258,13 +248,17 @@ def main(argv):
         "XDG_CONFIG_HOME": str(dirs["config"]),
         "XDG_DATA_HOME": str(dirs["app_data"]),
         "XDG_CACHE_HOME": str(dirs["cache"]),
+        "XDG_STATE_HOME": str(dirs["state"]),
+        "TMPDIR": str(dirs["tmp"]),
+        "TEMP": str(dirs["tmp"]),
+        "TMP": str(dirs["tmp"]),
         "APPDATA": str(dirs["app_data"]),
         "LOCALAPPDATA": str(dirs["local_app_data"]),
+        # Referenciada como {env:COARENA_API_KEY} na configuracao; nunca gravada em disco.
+        "COARENA_API_KEY": settings.get("COARENA_API_KEY", ""),
         "PATH": str(ROOT_DIR / "tools" / "bin") + os.pathsep + env.get("PATH", ""),
     })
 
-    model = settings.get("COARENA_MODEL") or DEFAULT_MODEL
-    cyber = settings.get("MCP_CYBERSTRIKE", "0")
     print("=" * 57)
     print("  MEGA-CODE-4 - Portable Cyber Coding Agent")
     print("=" * 57)
@@ -272,7 +266,7 @@ def main(argv):
     print(f"  Model   : {model}")
     print(f"  Project : {project_dir}")
     print(f"  Data    : {data_dir}")
-    print(f"  MCP     : HexStrike desativado | CyberStrike {cyber} (configurado, nao verificado)")
+    print("  MCP     : todos desativados (nenhum e habilitado pelo launcher)")
     print("=" * 57)
     print("\n  [~] Iniciando OpenCode...\n", flush=True)
 
@@ -283,7 +277,7 @@ def main(argv):
     except OSError as exc:
         fail(f"Nao foi possivel executar o engine: {exc}")
 
-    print(f"\n  Dados da sessao: {dirs['opencode']}")
+    print(f"\n  Dados da sessao: {dirs['app_data'] / 'opencode'}")
     print(f"  Codigo de saida: {status}")
     return status
 
