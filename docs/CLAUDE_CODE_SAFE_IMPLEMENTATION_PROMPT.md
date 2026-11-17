@@ -2,7 +2,7 @@
 
 Use este prompt no Claude Code com o repositório aberto. Primeiro leia o estado atual do código e da documentação; não presuma que o texto abaixo ou documentos antigos descrevam perfeitamente a implementação existente.
 
-> **Acesso:** o repositório `OmegaVermelho/MEGA-CODE-4` é privado. O Claude Code precisa estar autenticado e autorizado a ler e editar o repositório. Enviar somente o link não concede acesso.
+> **Acesso:** o repositório `OmegaVermelho/MEGA-CODE-4` está **público** (verificado em 2026-11-16). Qualquer pessoa pode ler, mas o Claude Code precisa estar autenticado e autorizado a escrever para criar branch, commits e PR. Se a visibilidade mudar, atualize este aviso.
 
 ---
 
@@ -25,7 +25,7 @@ Você é responsável por completar a base defensiva do projeto MEGA-CODE-4. Tra
 
 ### 1. Gerenciador local de processos
 
-Revise `mcp_manager.py` e implemente ou corrija uma TUI segura para gerenciar apenas serviços locais inofensivos e aprovados, como `dummy_mcp.py`.
+Crie (o arquivo `mcp_manager.py` ainda não existe no repositório) ou corrija uma TUI segura para gerenciar apenas serviços locais inofensivos e aprovados, como `dummy_mcp.py`.
 
 - Usar `data/mcp_prefs.json` para preferências booleanas e `data/mcp_pids.json` para PIDs, sem segredos.
 - Distinguir estados `OFF`, `ON` e `UNKNOWN` por verificação real do processo e health check.
