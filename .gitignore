@@ -9,6 +9,7 @@ data/cache/
 data/logs/
 data/ollama/
 data/npm-cache/
+.opencode/
 
 # Optional local tools (ripgrep/fzf)
 tools/bin/

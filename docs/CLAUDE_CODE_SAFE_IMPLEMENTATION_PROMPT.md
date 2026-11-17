@@ -2,7 +2,7 @@
 
 Use este prompt no Claude Code com o repositório aberto. Primeiro leia o estado atual do código e da documentação; não presuma que o texto abaixo ou documentos antigos descrevam perfeitamente a implementação existente.
 
-> **Acesso:** o repositório `OmegaVermelho/MEGA-CODE-4` é privado. O Claude Code precisa estar autenticado e autorizado a ler e editar o repositório. Enviar somente o link não concede acesso.
+> **Acesso:** o repositório `DeuzimarViana/MEGA-CODE-4` é público. O Claude Code precisa estar autenticado e autorizado a ler e editar o repositório.
 
 ---
 
