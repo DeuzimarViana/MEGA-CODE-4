@@ -200,7 +200,9 @@ finalize_native_model() {
 
 require_key() {
     local label="$1"
-    read -p "  Enter your $label API key: " USER_API_KEY
+    # -s: a chave não aparece na tela enquanto é digitada.
+    read -r -s -p "  Enter your $label API key (input hidden): " USER_API_KEY
+    echo ""
     USER_API_KEY=$(echo "$USER_API_KEY" | tr -d ' ' | tr -d '\r')
     if [ -z "$USER_API_KEY" ]; then
         echo -e "  ${RED}[ERROR] Key cannot be empty!${RESET}"
@@ -371,7 +373,9 @@ setup_local() {
     [ -z "$LOCAL_ENDPOINT" ] && LOCAL_ENDPOINT="http://localhost:1234/v1"
     LOCAL_ENDPOINT="${LOCAL_ENDPOINT%/}"
 
-    read -p "  API key (Enter for none/local): " LOCAL_API_KEY
+    # -s: a chave não aparece na tela enquanto é digitada.
+    read -r -s -p "  API key (Enter for none/local, input hidden): " LOCAL_API_KEY
+    echo ""
     LOCAL_API_KEY=$(echo "$LOCAL_API_KEY" | tr -d ' ' | tr -d '\r')
     [ -z "$LOCAL_API_KEY" ] && LOCAL_API_KEY="dummy"
 
@@ -430,12 +434,15 @@ setup_nvidia() {
     echo -e "  Free API keys: ${CYAN}https://build.nvidia.com${RESET}"
     echo ""
     while true; do
-        if ! read -p "  Enter your NVIDIA API key (nvapi-...): " NVIDIA_KEY; then
+        # -s: a chave não aparece na tela enquanto é digitada.
+        if ! read -r -s -p "  Enter your NVIDIA API key (nvapi-..., input hidden): " NVIDIA_KEY; then
             if [ -z "$NVIDIA_KEY" ]; then
+                echo ""
                 echo -e "  ${RED}[ERROR] Input closed.${RESET}"
                 return 1
             fi
         fi
+        echo ""
         NVIDIA_KEY=$(echo "$NVIDIA_KEY" | tr -d ' ' | tr -d '\r')
         [ -n "$NVIDIA_KEY" ] && break
         echo -e "  ${RED}[ERROR] Key cannot be empty!${RESET}"
