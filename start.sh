@@ -637,7 +637,7 @@ EOF
     chmod 600 "$CONFIG_FILE" 2>/dev/null
 }
 
-# ─── Ollama helper ──────────────────────────────────────────
+# ─── Ollama helper ────────────────────────────────────────
 OLLAMA_PID=""
 maybe_start_ollama() {
     [ "$AI_PROVIDER" = "local" ] || return 0
@@ -665,7 +665,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# ─── Main ───────────────────────────────────────────────────
+# ─── Main ─────────────────────────────────────────────────
 load_settings
 
 if [ "$SETUP_ONLY" -eq 1 ]; then
@@ -717,13 +717,12 @@ case "$AI_PROVIDER" in
         ;;
 esac
 
-echo ""
-echo -e "${CYAN}    ____                   __           __${RESET}"
-echo -e "${CYAN}   / __ \\____  ____  ____/ /__  ____  / /____${RESET}"
-echo -e "${CYAN}  / / / / __ \\/ __ \\/ __  / _ \\/ __ \\/ __/ _ \\${RESET}"
-echo -e "${CYAN} / /_/ / /_/ / /_/ / /_/ /  __/ / / / /_/  __/${RESET}"
-echo -e "${CYAN} \\____/ .___/\\____/\\__,_/\\___/_/ /_/\\__/\\___/${RESET}"
-echo -e "${CYAN}     /_/${RESET}"
+# ─── Splash: corvo + MEGA CODE 4 (tools/splash.sh; NO_SPLASH=1 desativa) ───
+if [ ${#PASS_ARGS[@]} -eq 0 ] && [ -f "$ROOT_DIR/tools/splash.sh" ]; then
+    source "$ROOT_DIR/tools/splash.sh"
+    show_splash
+fi
+
 echo ""
 echo -e "${CYAN}=========================================================${RESET}"
 echo -e "  ${BOLD}MEGA-CODE-4${RESET} ${DIM}- portable AI coding agent${RESET}"
