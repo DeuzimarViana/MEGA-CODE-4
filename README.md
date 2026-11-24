@@ -1,14 +1,5 @@
 <p align="center">
-  <pre align="center">
-<span style="color:#ff1a1a">███╗   ███╗███████╗ ██████╗  █████╗       ██████╗ ██████╗ ██████╗ ███████╗██╗  ██╗██╗  ██╗</span>
-<span style="color:#ff3333">████╗ ████║██╔════╝██╔════╝ ██╔══██╗     ██╔═══██╗██╔══██╗██╔══██╗██╔══██╗██║  ██║██║  ██║</span>
-<span style="color:#ff4d4d">██╔████╔██║█████╗  ██║  ███╗███████║     ██║     ██║   ██║█████╗  ███████║███████║</span>
-<span style="color:#ff6666">██║╚██╔╝██║██╔══╝  ██║   ██║██╔══██║     ██║     ██║   ██║██╔══╝  ██╔══██║╚════██║</span>
-<span style="color:#ff8080">██║ ╚═╝ ██║███████╗╚██████╔╝██║  ██║     ╚██████╗╚██████╔╝██████╔╝███████╗██║     ██║</span>
-<span style="color:#ff9999">╚═╝     ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝      ╚══════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝     ╚═╝</span>
-  </pre>
-  <strong style="color:#ff3333">⚡ MEGA-CODE-4 ⚡</strong><br>
-  <em>Portable AI Coding Project</em>
+  <img src="assets/banner.svg" alt="MEGA-CODE-4: corvo de olhos vermelhos ao lado do nome, no terminal" width="760">
 </p>
 
 # MEGA-CODE-4
@@ -75,12 +66,14 @@ Argumentos úteis: `./start.sh --dir /projeto`, `--setup`, `--quick`, `-p "pergu
 ```
 MEGA-CODE-4/
 ├── start.sh / START.bat       Launchers (Linux/macOS e Windows)
+├── assets/                    Banner do README e arte do corvo (splash)
 ├── engine/                    Binários OpenCode (5 plataformas)
 ├── data/                      Config, sessões e cache (portátil, gitignored)
 ├── tools/
 │   ├── build_engine.sh        Rebuild dos binários
 │   ├── ENGINE_PATCHES.md      Patches aplicados ao engine
 │   ├── change_provider.sh     Trocar provedor/modelo/chave
+│   ├── splash.sh / splash.py  Splash do corvo + MEGA CODE 4 (NO_SPLASH=1 desativa)
 │   ├── Change_Provider.bat    Versão Windows
 │   ├── mcp_router.py          Classificador experimental de prompts
 │   ├── secure_env.py          Cifragem opcional de arquivos (AES-GCM)
